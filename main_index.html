@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html xmlns="https://www.w3.org/1999/xhtml">
+<head>
+    <title>Ball Controller</title>
+    <meta https-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 
+
+
+    <style>
+        #content {position: relative;}
+    </style>
+    
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.21.6.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/addons/p5.dom.min.js"></script>
+    <script src="libraries/p5.play.js" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+    <div id="content">
+        <script>
+            
+var a = -500;
+var b = -900;
+var c = -200;
+var d = -650;
+var e = -400;
+var f = -700;
+var g = -100;
+var h = -500;
+var z = 0;
+var z1;
+var z2;
+var z3;
+var zx = -20;
+var zy = -5;
+var score = 0;
+var h1 = -10;
+var h2 = -15;
+var ctr;
+var pizza;
+var evilalien;
+var heroalien;
+var bg;
+var xpbounce = 1;
+var ypbounce = 1;
+var xpbounce1 = 1;
+var ypbounce1 = 1;
+
+
+function preload() {
+  pizza = loadImage('pizzadown.png');
+  pizza2 = loadImage( 'pizzaleft.png');
+  evilalien = loadImage('evil_alien.png');
+  heroalien = loadImage('hero_alien.png');
+  bg = loadImage('background.jpg');
+  myFont = loadFont("game-over.ttf");
+
+}
+
+            var x,y;
+            var x1,y1;
+            // server variables  *********
+            var dataServer;
+            var pubKey = 'pub-c-74eac257-c02f-445c-8878-1855324ab89f';
+            var subKey = 'sub-c-1a87f2fc-eb7f-11e8-ab71-96aca38ebf32';
+            var channelName = "ball";
+            
+            function setup(){
+              var can = createCanvas(windowWidth, windowHeight);
+                can.position(0,0);
+                background(255);
+                // initialize pubnub  *********
+                dataServer = new PubNub(
+                {
+                    publish_key   : pubKey,  //get these from the pubnub account online
+                    subscribe_key : subKey,  
+                    ssl: true  //enables a secure connection. This option has to be used if using the OCAD webspace
+                });
+
+                //attach callbacks to the pubnub object to handle messages and connections *********
+                dataServer.addListener({ message: readIncoming, presence: whoisconnected })
+                dataServer.subscribe({channels: [channelName]});
+                
+                x = windowWidth/2;
+                y = (windowHeight - (windowHeight/5));
+                z1 = windowWidth/2;
+                z2 = windowWidth - (windowWidth/3);
+                z3 = windowWidth - (windowWidth/6);
+                ctr = 0.01;
+
+                
+            }
+
+            function draw(){
+                background(bg, image.width, image.height);
+                image(heroalien,x, y, 100, 100);
+                textAlign(CENTER, TOP);
+                textFont("myfont");
+                textSize(32);
+                fill(217,65,78);
+				
+                text("Score :" + score, windowWidth/2, 10);
+
+
+  h = h + 1;
+   if (h > windowHeight-60) {
+    h = -20;
+  }
+  a = a + 0.8;
+   if (a > (windowHeight-60)) {
+    a = -50;
+  }
+  b = b + 2.5;
+   if (b > (windowWidth-20)) {
+    b = -100;
+  }
+  c = c + 2;
+   if (c > (windowHeight-60)) {
+    c = -200;
+  }
+  d = d + 1;
+   if (d > (windowWidth-20)) {
+     d = -250;
+   }
+  e = e + 1.5;
+   if (e > windowHeight-60) {
+     e = -10;
+   }
+  f = f - 1.75;
+   if (f < 2) {
+     f = windowWidth;
+   }
+  g = g + .99 + ctr;
+   if (g > (windowHeight-60)) {
+     g = -300;
+   }
+
+   zx = zx + (xpbounce * 2);
+   if (zx > (windowWidth-10)) 
+    { xpbounce = xpbounce * (-1);}
+
+	if (zx < -20)
+	{ xpbounce = xpbounce * (-1);}
+
+
+	zy = zy + ypbounce;
+   if (zy > windowHeight-50) 
+   {
+    ypbounce = ypbounce * (-1);
+  }
+
+  if (zy < -5)
+   {
+    ypbounce = ypbounce * (-1);
+  }
+
+   z = lerp(z,x,0.002 + ctr);
+   z1 = lerp(z1,y, 0.001 + ctr);
+   z2 = lerp(z2,(x-50), 0.001 + ctr);
+   z3 = lerp(z3, (x+250), 0.002 + ctr);
+
+   h1 = h1 + xpbounce1;
+   if (h1 > (windowWidth-10))
+   {
+    xpbounce1 = xpbounce1 * (-1);
+	}
+	if (h1 < -15)
+	{xpbounce1 = xpbounce1 * (-1);}
+
+	h2 = h2 + (ypbounce1 * 2);
+   if (h2 > windowHeight-50) {
+    ypbounce1 = ypbounce1 * (-1);
+  }
+  if (h2 < -18)
+  {ypbounce1 = ypbounce1 * (-1);}
+  
+  fill(166, 90, 59);
+  rect(0, windowHeight-40, windowWidth, 40);
+
+  //enemy circles
+  fill(231, 76, 60);
+ // ellipse(z, h, 40, 40, evilalien); 
+ //  ellipse(z1, a, 40, 40, evilalien);
+ //  ellipse(b , z1, 70, 70,evilalien);
+ //  ellipse(z2, c, 50, 50, evilalien);
+ //  ellipse(d, z1, 50, 50, evilalien);
+ //  ellipse(z3, e, 90, 90, evilalien);
+ //  ellipse(f, z1, 40, 40, evilalien);
+ //  ellipse(z1, g, 100, 100, evilalien);
+
+  image(evilalien, z, h, 40, 40);
+  image(evilalien,z1, a, 40, 40);
+  image(evilalien,b , z1, 70, 70);
+  image(evilalien,z2, c, 50, 50);
+  image(evilalien,d, z1, 50, 50);
+  image(evilalien,z3, e, 90, 90);
+  image(evilalien,f, z1, 40, 40);
+  image(evilalien,z1, g, 100, 100);
+
+  //score circles
+
+  //score circles
+  fill(60,76,231);
+  image(pizza, h1, h2, 80, 80);
+  image(pizza, zx, zy, 40, 40);
+
+  
+//enemy collision
+if(z>(x-30) && z<(x+30) && h>(y-30) && h<(y+30))
+{
+
+fill(0, 0, 0);
+   rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+    textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(z1>(x-20) && z1<(x+20) && a>(y-20) && a<(y+20))
+{
+
+fill(0, 0, 0);
+  rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(b>(x-30) && b<(x+30) && z1>(y-30) && z1<(y+30))
+{
+
+fill(0, 0, 0);
+  rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(z2>(x-20) && z2<(x+20) && c>(y-20) && c<(y+20))
+{
+
+fill(0, 0, 0);
+   rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(d>(x-40) && d<(x+40) && z1>(y-40) && z1<(y+40))
+{
+
+fill(0, 0, 0);
+  rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(z3>(x-40) && z3<(x+40) && e>(y-40) && e<(y+40))
+{
+
+fill(0, 0, 0);
+   rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+    text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(f>(x-30) && f<(x+30) && z1>(y-30) && z1<(y+30))
+{
+
+fill(0, 0, 0);
+  rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+
+if(z1>(x-50) && z1<(x+50) && g>(y-50) && g<(y+50))
+{
+
+fill(0, 0, 0);
+   rect( 0, 0, windowWidth, windowHeight);
+   fill(255,255,255);
+   textFont("myfont");
+     textSize(60);
+   text("Game Over!", windowWidth/2, (windowHeight/2)-50);
+
+	 fill(255,255,255);
+     textFont("myfont");
+     textSize(50);
+     text("Score :"+ score, windowWidth/2, (windowHeight/2)+50);
+
+    noLoop();
+}
+ //fill(0, 0, 0);
+ //rect( zx,h1, 150, 150);
+
+
+
+//score
+// 
+if((h1>(x-80) && h1<(x+80)) && (h2<(y+80) && h2>(y-80)))
+{
+  score = score+1;
+  h1 = -10;
+  h2 = -15;
+ // noLoop();
+}
+
+if((zx>(x-80) && zx<(x+80)) && (zy<(y+80) && zy>(y-80)))
+{
+  score = score+1;
+  zx = -20;
+  zy = -5;
+ // noLoop();
+}
+
+            }
+
+
+
+            ///uses built in mouseClicked function to send the data to the pubnub server
+            function sendTheMessage() {}
+
+            function readIncoming(inMessage) //when new data comes in it triggers this function, 
+            {                               // this works becsuse we subscribed to the channel in setup()
+
+              // simple error check to match the incoming to the channelName
+              if(inMessage.channel == channelName)
+              {
+
+                //SHIP GOES UP 1
+                if ( inMessage.message == 1){
+                    //console.log("1");
+                    y = y - 20;
+                }
+                //SHIP GOES DOWN 2
+                if ( inMessage.message == 2){
+                    //console.log("2");
+                    y = y + 20;
+                }
+                //SHIP GOES LEFT 3
+                if ( inMessage.message == 3){
+                    //console.log("1");
+                    x = x - 20;
+                }
+                //SHIP GOES RIGHT 4
+                if ( inMessage.message == 4){
+                    //console.log("1");
+                    x = x + 20;
+                }
+
+              }
+            }
+
+            function whoisconnected(connectionInfo)
+            {
+
+            }
+
+            function windowResized() {
+    // change canvas size
+    createCanvas(windowWidth, windowHeight);    
+}
+
+            </script>
+        </div>
+    </body>
+</html>
